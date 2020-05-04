@@ -2,3 +2,4 @@
 .env
 /.vscode
 money.json
+package-lock.json

@@ -1,6 +1,24 @@
 **About**
 
-This bot is focused on economic od a server. User can show all available commands, his own balance, send money to other user. If a user is administrator he can also check other user's balance, increase or decrease their balance and change starting amount of money for new members. Commands and messages of the bot are in Czech language.
+This bot is focused on economic of a server. User can show all available commands, his own balance, send money to other user. If a user is administrator he can also check other user's balance, increase or decrease their balance and change starting amount of money for new members. Commands and messages of the bot are in Czech language.
+
+Uses MongoDB for storing of values. Expected syntax of DB is:
+```
+{
+    "start-money": 5000,
+    "users": 
+    {
+        "user#1234": 6000,
+        "user#6789": 5000
+    }
+}
+```
+
+Enviromental variables that are needed to be filled into `.env` file:
+* DISCORD_TOKEN - Token for Discord bot from Discord Developer Portal
+* DISCORD_GUILD - Name of Discord server
+* MONGODB_URI - MongoDB URI for connection to MongoDB
+* DB_NAME - Database name
 
 **Commands**
 
@@ -13,6 +31,12 @@ This bot is focused on economic od a server. User can show all available command
 !připsat-start amount - Changes starting amount of money for new users  
 !připsat @user amount - Adds amount of money to a user  
 !odebrat @user amount - Removes amount of money to a user  
+
+**Prerequisities**
+
+* python => 3.6
+* python3-pip (sudo apt-get install python3-pip)
+* virtualenv (sudo pip3 install virtualenv)
 
 **How to run**
 
