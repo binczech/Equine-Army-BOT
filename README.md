@@ -19,6 +19,8 @@ Enviromental variables that are needed to be filled into `.env` file:
 * DISCORD_GUILD - Name of Discord server
 * MONGODB_URI - MongoDB URI for connection to MongoDB
 * DB_NAME - Database name
+* LOG_CHANNEL - Channel for logging
+* WELCOME_CHANNEL - Channel for welcoming users
 
 **Commands**
 

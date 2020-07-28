@@ -10,6 +10,8 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
 MONGODB_URI = os.getenv('MONGODB_URI')
 DB_NAME = os.getenv('DB_NAME')
+LOG_CHANNEL = os.getenv('LOG_CHANNEL')
+WELCOME_CHANNEL = os.getenv('WELCOME_CHANNEL')
 bot = commands.Bot(command_prefix='!')
 
 
@@ -51,26 +53,69 @@ async def on_ready():
         f'{bot.user} is connected to the following guild:\n'
         f'{guild.name}(id: {guild.id})'
     )
+    channel = bot.get_channel(int(LOG_CHANNEL))
+    await channel.send(f'Bot připojen na server!')
 
 
 @bot.event
 async def on_member_join(member):
-    channel = bot.get_channel(689815313537171522)
+    channel = bot.get_channel(int(WELCOME_CHANNEL))
     await channel.send(f'Ahoj {member.mention}, vítej na Equine Army serveru!')
 
 
 @bot.command(name="příkazy", pass_context=True)
 async def prikazy(ctx):
-    response = '**Příkazy pro hráče:**\n\
-*!příkazy* - vypíše seznam příkazů\n\
-*!peníze* - vypíše aktuální stav konta hráče\n\
-*!platba @hráč hodnota* - pošle hráči peníze z vlastního konta\n\
-**Příkazy pro adminy:**\n\
-*!kontrola @hráč* - vypíše peníze konkrétního hráče\n\
-*!připsat-start hodnota* - změní hodnotu startovních peněz\n\
-*!připsat @hráč hodnota* - připíše hráčovi peníze\n\
-*!odebrat @hráč hodnota* - odepíše hráčovi peníze'
-    await ctx.send(response)
+    embed = discord.Embed(
+        title='Uživatelské příkazy',
+        description='',
+        color=0x1AFB32
+    )
+    embed.set_footer(
+        icon_url=ctx.author.avatar_url,
+        text=str(ctx.author)
+    )
+    embed.add_field(
+        name='!příkazy',
+        value='vypíše seznam příkazů',
+        inline=True
+    )
+    embed.add_field(
+        name='!peníze',
+        value='vypíše aktuální stav konta hráče',
+        inline=False
+    )
+    embed.add_field(
+        name='!platba @hráč hodnota',
+        value='pošle hráči peníze z vlastního konta',
+        inline=False
+    )
+    await ctx.send(embed=embed)
+    embed_admin = discord.Embed(
+        title='Admin příkazy',
+        description='',
+        color=0x1AFB32
+    )
+    embed_admin.set_footer(icon_url=ctx.author.avatar_url, text=str(ctx.author))
+    embed_admin.add_field(
+        name='!kontrola @hráč', value='vypíše peníze \konkrétního hráče',
+        inline=False
+    )
+    embed_admin.add_field(
+        name='!připsat-start hodnota',
+        value='změní hodnotu startovních peněz',
+        inline=False
+    )
+    embed_admin.add_field(
+        name='!připsat @hráč hodnota',
+        value='připíše hráčovi peníze',
+        inline=False
+    )
+    embed_admin.add_field(
+        name='!odebrat @hráč hodnota',
+        value='odepíše hráčovi peníze',
+        inline=False
+    )
+    await ctx.send(embed=embed_admin)
 
 
 @bot.command(name='peníze', pass_context=True)
@@ -92,12 +137,17 @@ async def platba(ctx, user: discord.User = None, value: int = 0):
     user1_id = str(ctx.message.author)
     user2_id = str(user)
     data = read_db()
+    channel = bot.get_channel(int(LOG_CHANNEL))
     if value < 0:
         await ctx.send(f'Hráč {ctx.message.author.mention} se pokusil okrást \
 hráče {user.mention}!')
+        await channel.send(f'{ctx.message.author.mention} se pokusil při platbě\
+ zadat zápornou částku.')
     elif value > data['users'][user1_id]:
-        await ctx.send(f'Hráč {ctx.message.author.mention} nemá dostatečný počet \
-peněz, aktuálně má {data["users"][user1_id]} peněz.')
+        await ctx.send(f'Hráč {ctx.message.author.mention} nemá dostatečný \
+počet peněz, aktuálně má {data["users"][user1_id]} peněz.')
+        await channel.send(f'{ctx.message.author.mention} se pokusil při platbě\
+ zadat vyšší částku, než má.')
     else:
         data['users'][user1_id] -= value
         new_value1 = data['users'][user1_id]
@@ -107,6 +157,8 @@ peněz, aktuálně má {data["users"][user1_id]} peněz.')
         await ctx.send(f'Hráči {user.mention} bylo posláno {value} peněz, \
 hráč {ctx.message.author.mention} má nyní {new_value1} peněz a hráč \
 {user.mention} má nyní {new_value2} peněz.')
+        await channel.send(f'Úspěšně provedena platba hráčem \
+{ctx.message.author.mention} hráči {user.mention}.')
 
 
 @bot.command(name='kontrola', pass_context=True)
