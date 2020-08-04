@@ -309,16 +309,16 @@ def is_admin(user_id, channel_id, guild_id):
 async def on_raw_reaction_add(payload):
     if is_admin(payload.user_id, payload.channel_id, payload.guild_id):
         emote_values = await get_list_of_prizes()
-        if payload.emoji.name in emote_values.keys():
-            await grant_prize(payload, emote_values[payload.emoji.name])
+        if str(payload.emoji) in emote_values.keys():
+            await grant_prize(payload, emote_values[str(payload.emoji)])
 
 
 @bot.event
 async def on_raw_reaction_remove(payload):
     if is_admin(payload.user_id, payload.channel_id, payload.guild_id):
         emote_values = await get_list_of_prizes()
-        if payload.emoji.name in emote_values.keys():
-            emote = emote_values[payload.emoji.name]
+        if str(payload.emoji) in emote_values.keys():
+            emote = emote_values[str(payload.emoji)]
             emote["value"] *= -1
             await grant_prize(payload, emote)
 
