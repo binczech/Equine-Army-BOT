@@ -167,7 +167,9 @@ async def platba(ctx, user: discord.User = None, value: int = 0):
     user2_id = str(user)
     data = read_db()
     channel = bot.get_channel(int(LOG_CHANNEL))
-    if value < 0:
+    if user == ctx.message.author:
+        await ctx.send(f'Nemůžeš poslat peníze sám sobě.')
+    elif value < 0:
         await ctx.send(f'Hráč {ctx.message.author.mention} se pokusil okrást \
 hráče {user.mention}!')
         await channel.send(f'{ctx.message.author.mention} se pokusil při platbě\
