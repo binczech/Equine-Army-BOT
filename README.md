@@ -21,6 +21,8 @@ Enviromental variables that are needed to be filled into `.env` file:
 * DB_NAME - Database name
 * LOG_CHANNEL - Channel for logging
 * WELCOME_CHANNEL - Channel for welcoming users
+* ROLES_CHANNEL - Channel for adding roles (TODO)
+* REWARDS_CHANNEL - Channel for setting rewards
 
 **Commands**
 
@@ -33,6 +35,17 @@ Enviromental variables that are needed to be filled into `.env` file:
 !připsat-start amount - Changes starting amount of money for new users  
 !připsat @user amount - Adds amount of money to a user  
 !odebrat @user amount - Removes amount of money to a user  
+
+**Reactions**
+
+*Admin Reactions:*
+* When admin adds to a message one reaction mentioned and valued in REWARDS_CHANNEL, money will be awarded to author of the message.
+* When admin removes the reaction, money will be taken back.
+
+**Channels**
+
+*Rewards Channel:*
+* Must contain lines in messages in this format: \[emote\]\[2 spaces\]\[number of money\]\[2 spaces\]\[description of reward\]
 
 **Prerequisities**
 

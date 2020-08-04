@@ -2,6 +2,8 @@ import os
 import json
 import pymongo
 import discord
+import traceback
+import re
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -12,6 +14,8 @@ MONGODB_URI = os.getenv('MONGODB_URI')
 DB_NAME = os.getenv('DB_NAME')
 LOG_CHANNEL = os.getenv('LOG_CHANNEL')
 WELCOME_CHANNEL = os.getenv('WELCOME_CHANNEL')
+ROLES_CHANNEL = os.getenv('ROLES_CHANNEL') # TODO
+REWARDS_CHANNEL = os.getenv('REWARDS_CHANNEL')
 bot = commands.Bot(command_prefix='!')
 
 
@@ -44,6 +48,31 @@ def save_db(data):
     client, money = open_db()
     money.replace_one({'_id': data['_id']}, data, upsert=True)
     client.close()
+
+
+# user_id should be string
+def change_users_money(user_id, value):
+    data = read_db()
+    if user_id in data['users'].keys():
+        data['users'][user_id] += value
+    else:
+        start_value = data['start-money']
+        data['users'][user_id] = start_value + value
+    new_value = data['users'][user_id]
+    save_db(data)
+    return new_value
+
+
+# user_id should be string
+def get_user_money(user_id):
+    data = read_db()
+    if user_id in data['users'].keys():
+        value = data['users'][user_id]
+    else:
+        start_value = data['start-money']
+        data['users'][user_id] = start_value
+        save_db(data)
+    return value
 
 
 @bot.event
@@ -228,11 +257,91 @@ async def reset(ctx):
     await ctx.send(f'Všem hráčům byly resetovány peníze na {reset_value}.')
 
 
+async def grant_prize(payload, emote):
+    channel = bot.get_channel(payload.channel_id)
+    log_channel = bot.get_channel(int(LOG_CHANNEL))
+    try:
+        message = await channel.fetch_message(payload.message_id)
+    except NotFound:
+        return
+    user = message.author
+    reaction_author = bot.get_user(payload.user_id)
+    new_value = change_users_money(str(user), emote["value"])
+    if emote["value"] > 0:
+        text = f'Uživatel {user.mention} získal odměnu {emote["value"]}\
+ od {reaction_author.mention} za: {emote["description"]}.'
+        await channel.send(text)
+        await log_channel.send(f'{text} ({message.jump_url})')
+    else:
+        await channel.send(f'Odměna pro uživatele {user.mention} zrušena.')
+        await log_channel.send(f'Uživatel {reaction_author.mention} zrušil \
+odměnu pro {user.mention} za: {emote["description"]}.')
+
+
+
+async def get_list_of_prizes():
+    channel = bot.get_channel(int(REWARDS_CHANNEL))
+    messages = channel.history()
+    emote_values = {}
+    line_regex = re.compile(r"^.*(\s\s)(\d*)(\s\s)(.*)$")
+    async for message in messages:
+        for line in message.content.splitlines():
+            if re.search(line_regex, line):
+                emote, value, description = line.split("  ", 2)
+                emote_values[emote] = {
+                                        "value": int(value),
+                                        "description": description
+                                        }
+    return emote_values
+
+
+def is_admin(user_id, channel_id, guild_id):
+    guild = bot.get_guild(guild_id)
+    user = guild.get_member(user_id)
+    channel = bot.get_channel(channel_id)
+    permissions = user.permissions_in(channel)
+    return permissions.administrator
+
+
+@bot.event
+async def on_raw_reaction_add(payload):
+    if is_admin(payload.user_id, payload.channel_id, payload.guild_id):
+        emote_values = await get_list_of_prizes()
+        if payload.emoji.name in emote_values.keys():
+            await grant_prize(payload, emote_values[payload.emoji.name])
+
+
+@bot.event
+async def on_raw_reaction_remove(payload):
+    if is_admin(payload.user_id, payload.channel_id, payload.guild_id):
+        emote_values = await get_list_of_prizes()
+        if payload.emoji.name in emote_values.keys():
+            emote = emote_values[payload.emoji.name]
+            emote["value"] *= -1
+            await grant_prize(payload, emote)
+
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.errors.BadArgument):
         await ctx.send('Prosím, tagni existujícího hráče.')
     else:
         print(error)
+
+
+@bot.event
+async def on_error(event, *args, **kwargs):
+    channel = bot.get_channel(int(LOG_CHANNEL))
+    output = traceback.format_exc()
+    print(output)
+    output = utils.cut_string(output, 1900)
+    for message in output:
+        await channel.send("```\n{}```".format(message))
+
+
+@bot.event
+async def on_disconnect():
+    channel = bot.get_channel(int(LOG_CHANNEL))
+    await channel.send("Bot byl odpojen ze serveru.")
+
 
 bot.run(TOKEN)
