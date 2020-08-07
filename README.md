@@ -47,6 +47,10 @@ Enviromental variables that are needed to be filled into `.env` file:
 *Rewards Channel:*
 * Must contain lines in messages in this format: \[emote\]\[2 spaces\]\[number of money\]\[2 spaces\]\[description of reward\]
 
+**Extensions**
+
+Extensions in terms of `discord.ext.commands.Cog` can be added. It is needed to add a `Cog` in a python file to the `extensions` folder and add name of the python file to `extensions` array in `config\config.py`.
+
 **Prerequisities**
 
 * python => 3.6

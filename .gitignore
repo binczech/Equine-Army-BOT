@@ -3,3 +3,6 @@
 /.vscode
 money.json
 package-lock.json
+/__pycache__
+config/__pycache__
+extensions/__pycache__
