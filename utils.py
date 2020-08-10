@@ -1,5 +1,6 @@
 import json
 import pymongo
+import re
 from config.config import Config
 
 
@@ -63,3 +64,23 @@ def cut_string(string: str, part_len: int):
     return list(
         string[0+i:part_len+i] for i in range(0, len(string), part_len)
     )
+
+
+async def parse_admin_msgs(messages, value_is_int):
+    emote_values = {}
+    if value_is_int:
+        line_regex = re.compile(r"^.*(\s\s)(\d*)(\s\s)(.*)$")
+    else:
+        line_regex = re.compile(r"^.*(\s\s)(\w*)(\s\s)(.*)$")
+    async for message in messages:
+        for line in message.content.splitlines():
+            if re.search(line_regex, line):
+                emote, value, description = line.split("  ", 2)
+                emote_values[emote] = {
+                                        "value": value,
+                                        "description": description
+                                        }
+                if value_is_int:
+                    emote_values[emote]["value"] = \
+                        int(emote_values[emote]["value"])
+    return emote_values

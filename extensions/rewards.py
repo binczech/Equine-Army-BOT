@@ -1,4 +1,3 @@
-import re
 import utils
 from config.config import Config
 from discord.ext import commands
@@ -31,17 +30,7 @@ odměnu pro {user.mention} za: {emote["description"]}.')
     async def get_list_of_prizes(self):
         channel = self.bot.get_channel(int(Config.REWARDS_CHANNEL))
         messages = channel.history()
-        emote_values = {}
-        line_regex = re.compile(r"^.*(\s\s)(\d*)(\s\s)(.*)$")
-        async for message in messages:
-            for line in message.content.splitlines():
-                if re.search(line_regex, line):
-                    emote, value, description = line.split("  ", 2)
-                    emote_values[emote] = {
-                                            "value": int(value),
-                                            "description": description
-                                            }
-        return emote_values
+        return await utils.parse_admin_msgs(messages, True)
 
     def is_admin(self, user_id, channel_id, guild_id):
         guild = self.bot.get_guild(guild_id)
@@ -50,24 +39,27 @@ odměnu pro {user.mention} za: {emote["description"]}.')
         permissions = user.permissions_in(channel)
         return permissions.administrator
 
-    @commands.Cog.listener()
-    async def on_raw_reaction_add(self, payload):
-        if self.is_admin(payload.user_id, payload.channel_id,
-                         payload.guild_id):
+    async def check_reaction(self, payload):
+        if (payload.channel_id != int(Config.ROLES_CHANNEL)
+            and self.is_admin(payload.user_id, payload.channel_id,
+                              payload.guild_id)):
             emote_values = await self.get_list_of_prizes()
             if str(payload.emoji) in emote_values.keys():
-                await self.grant_prize(payload,
-                                       emote_values[str(payload.emoji)])
+                if payload.event_type == "REACTION_ADD":
+                    await self.grant_prize(payload,
+                                           emote_values[str(payload.emoji)])
+                elif payload.event_type == "REACTION_REMOVE":
+                    emote = emote_values[str(payload.emoji)]
+                    emote["value"] *= -1
+                    await self.grant_prize(payload, emote)
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload):
+        await self.check_reaction(payload)
 
     @commands.Cog.listener()
     async def on_raw_reaction_remove(self, payload):
-        if self.is_admin(payload.user_id, payload.channel_id,
-                         payload.guild_id):
-            emote_values = await self.get_list_of_prizes()
-            if str(payload.emoji) in emote_values.keys():
-                emote = emote_values[str(payload.emoji)]
-                emote["value"] *= -1
-                await self.grant_prize(payload, emote)
+        await self.check_reaction(payload)
 
 
 def setup(bot):

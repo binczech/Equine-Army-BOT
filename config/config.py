@@ -7,7 +7,7 @@ load_dotenv()
 
 class Config:
 
-    extensions = ['economics', 'rewards']
+    extensions = ['economics', 'rewards', 'roles']
     TOKEN = os.getenv('DISCORD_TOKEN')
     GUILD = os.getenv('DISCORD_GUILD')
     MONGODB_URI = os.getenv('MONGODB_URI')
