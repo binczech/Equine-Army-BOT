@@ -35,6 +35,8 @@ Enviromental variables that are needed to be filled into `.env` file:
 !připsat-start amount - Changes starting amount of money for new users  
 !připsat @user amount - Adds amount of money to a user  
 !odebrat @user amount - Removes amount of money to a user  
+!reset @user - Resets money of a user to starting amount
+!připsat-roli @role amount - Adds amount of money too all users with a role
 
 **Reactions**
 

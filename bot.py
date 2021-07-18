@@ -4,7 +4,9 @@ import utils
 from config.config import Config
 from discord.ext import commands
 
-bot = commands.Bot(command_prefix='!')
+intents = discord.Intents.default()
+intents.members = True
+bot = commands.Bot(command_prefix='!', intents=intents)
 
 
 @bot.event
@@ -69,12 +71,22 @@ async def prikazy(ctx):
     )
     embed_admin.add_field(
         name='!připsat @hráč hodnota',
-        value='připíše hráčovi peníze',
+        value='připíše peníze hráče',
         inline=False
     )
     embed_admin.add_field(
         name='!odebrat @hráč hodnota',
-        value='odepíše hráčovi peníze',
+        value='odepíše peníze hráče',
+        inline=False
+    )
+    embed_admin.add_field(
+        name='!resetovat @hráč',
+        value='resetuje peníze hráče na startovní hodnotu peněz',
+        inline=False
+    )
+    embed_admin.add_field(
+        name='!připsat-roli @role',
+        value='připíše peníze hráčům s rolí',
         inline=False
     )
     await ctx.send(embed=embed_admin)
@@ -83,7 +95,7 @@ async def prikazy(ctx):
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.errors.BadArgument):
-        await ctx.send('Prosím, tagni existujícího hráče.')
+        await ctx.send('Pro příkaz byly zadány špatné argumenty.')
     else:
         print(error)
 
